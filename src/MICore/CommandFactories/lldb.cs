@@ -48,10 +48,13 @@ namespace MICore
 
         protected override StringBuilder BuildBreakInsert(string condition, bool enabled)
         {
-            // LLDB's use of the pending flag requires an optional parameter or else it fails.
+            // LLDB's 3.5 use of the pending flag requires an optional parameter or else it fails.
             // We will use "on" for now. 
-            // TODO: Fix this on LLDB-MI's side
-            string pendingFlag = "-f on ";
+            string pendingFlag = "-f";
+            if (RequiresOnKeywordForBreakInsert())
+            {
+                pendingFlag = "-f on ";
+            }
 
             StringBuilder cmd = new StringBuilder("-break-insert ");
             cmd.Append(pendingFlag);
@@ -191,6 +194,31 @@ namespace MICore
                 string value = results.FindString("value");
                 return await base.VarAssign(variableName, value, threadId, frameLevel);
             }
+        }
+
+        private bool? _requiresOnKeywordForBreakInsert;
+
+        // In LLDB 3.5, -break-insert -f requires a string before the actual method name.
+        // We use a placeholder 'on' for this.
+        // Later versions do not require the 'on' keyword.
+        public override bool RequiresOnKeywordForBreakInsert()
+        {
+            if (!_requiresOnKeywordForBreakInsert.HasValue)
+            {
+                _requiresOnKeywordForBreakInsert = false;
+                try
+                {
+                    // Test to see if -break-insert -f main works
+                    string breakInsertMainCommand = "-break-insert -f main";
+                    _debugger.CmdAsync(breakInsertMainCommand, ResultClass.done).Wait();
+                }
+                catch (UnexpectedMIResultException)
+                {
+                    _requiresOnKeywordForBreakInsert = true;
+                }
+            }
+
+            return _requiresOnKeywordForBreakInsert.Value;
         }
     }
 }

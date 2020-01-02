@@ -674,6 +674,11 @@ namespace MICore
             return false;
         }
 
+        public virtual bool RequiresOnKeywordForBreakInsert()
+        {
+            return false;
+        }
+
         #endregion
     }
 }

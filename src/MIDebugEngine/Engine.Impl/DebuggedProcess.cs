@@ -867,9 +867,9 @@ namespace Microsoft.MIDebugEngine
         {
             // Allow main breakpoint to be pending.
             string breakInsertMainFormat = "-break-insert -f{0} main";
-            if (this.MICommandFactory.Mode == MIMode.Lldb)
+            if (this.MICommandFactory.RequiresOnKeywordForBreakInsert())
             {
-                // break-insert -f requires 'on' in lldb scenario
+                // break-insert -f requires 'on' in lldb 3.5 scenario
                 return string.Format(CultureInfo.InvariantCulture, breakInsertMainFormat, " on");
             }
             return string.Format(CultureInfo.InvariantCulture, breakInsertMainFormat, string.Empty);
